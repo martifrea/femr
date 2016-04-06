@@ -23,6 +23,7 @@ import femr.common.dtos.ServiceResponse;
 import femr.common.models.MedicationAdministrationItem;
 import femr.common.models.MedicationItem;
 import femr.common.models.PrescriptionItem;
+import femr.data.models.core.IMedication;
 
 import java.util.List;
 import java.util.Map;
@@ -148,4 +149,9 @@ public interface IMedicationService {
 
 
     ServiceResponse<MedicationItem> removeMedication(int id);
+
+    /*
+        Retrieves a Imedication item by its id
+     */
+    ServiceResponse<IMedication> retrieveByID(int id);
 }
