@@ -30,7 +30,7 @@ public class BaseTest {
 
         Map<String, Object> conf = conf = new HashMap<>();
 
-        conf.put(  "db.default.url","jdbc:mysql://localhost:3306/femr_testdb");
+        conf.put(  "db.default.url","jdbc:mysql://localhost:3306/test");
         conf.put(  "db.default.username","root");
         conf.put(  "db.default.password","m08tfrea");
 
