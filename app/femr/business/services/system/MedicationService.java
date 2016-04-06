@@ -642,4 +642,28 @@ public class MedicationService implements IMedicationService {
 
         return response;
     }
+
+    @Override
+    public ServiceResponse<MedicationItem> removeMedication(int medicationID) {
+        ServiceResponse<MedicationItem> response = new ServiceResponse<>();
+        try{
+
+            // Get the medication Item by it's ID
+            IMedication medication;
+            ExpressionList<Medication> medicationQuery = QueryProvider.getMedicationQuery()
+                    .where()
+                    .eq("id", medicationID);
+
+            // Find one medication (should only be 1 with the ID) from the database
+            medication = medicationRepository.findOne(medicationQuery);
+
+            medicationRepository.delete(medication);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            response.addError("exception", ex.getMessage());
+        }
+
+        return response;
+    }
 }

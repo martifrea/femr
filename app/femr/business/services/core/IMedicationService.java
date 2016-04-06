@@ -144,4 +144,8 @@ public interface IMedicationService {
      * and/or errors if they exist
      */
     ServiceResponse<ObjectNode> retrieveAllMedicationsWithID();
+
+
+
+    ServiceResponse<MedicationItem> removeMedication(int id);
 }
