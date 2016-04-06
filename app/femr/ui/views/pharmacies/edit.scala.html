@@ -1,5 +1,7 @@
 @(currentUser: femr.common.dtos.CurrentUser, viewModel: femr.ui.models.pharmacy.EditViewModelGet, searchError: java.lang.Boolean )
 
+
+@import femr.ui.controllers.routes.MedicalController
 @import femr.ui.controllers.routes.PharmaciesController
 @import femr.ui.views.html.layouts.main
 @import femr.ui.views.html.partials.search
@@ -26,6 +28,9 @@
 
         @patientOverview(viewModel.getPatient, viewModel.getPatientEncounterItem, viewModel.getSettings, "Pharmacy - " + "Patient ID: " + viewModel.getPatient.getId)
 
+        @helper.form(action = MedicalController.editGet(viewModel.getPatient.getId))   {
+            <button type="submit" class="btn btn-default pull-right">See This Patient In Medical</button>
+        }
 
 
         <div id="mainWrap" class="backgroundForWrap">
