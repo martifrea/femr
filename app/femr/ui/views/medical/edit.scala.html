@@ -2,6 +2,7 @@
         vitals: femr.util.DataStructure.Mapping.VitalMultiMap,
         viewModel: femr.ui.models.medical.EditViewModelGet)
 
+@import femr.ui.controllers.routes.PharmaciesController
 @import femr.ui.controllers.routes.MedicalController
 @import femr.ui.controllers.routes.SearchController
 @import femr.ui.views.html.layouts.main
@@ -30,6 +31,9 @@
 
     <div id="medicalContentWrap">
 
+        @helper.form(action = PharmaciesController.editGet(viewModel.getPatientItem.getId))   {
+            <button type="submit" class="btn btn-default pull-right">See This Patient In Pharmacy</button>
+        }
 
         @patientOverview(viewModel.getPatientItem, viewModel.getPatientEncounterItem, viewModel.getSettings, "Medical - " + "Patient ID: " + viewModel.getPatientItem.getId)
 
@@ -48,6 +52,8 @@
                 </div>
 
                 <button type="button" id="newVitalsBtn" class="fButton fOtherButton">Record New Vitals</button>
+
+
 
                 <div id="newVitalsDialog" title="Record New Vitals">
                     <div id="newVitalsPartial">
