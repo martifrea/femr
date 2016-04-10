@@ -43,16 +43,15 @@
                     <label class="prescription-field prescriptionAdministrationDays">Days</label>
                     <label class="prescription-field prescriptionAmount">Amount</label>
                 </div>
-
-                @for(script <- prescriptions) {
-
-                    @prescriptionRow( medicationAdministrationItems, 0, script )
-                }
-
                 <div class="newPrescriptionsContainer">
-                @prescriptionRow( medicationAdministrationItems, 0, null )
+                    @for(x <- 0 to prescriptions.length) {
+                        @if(x != prescriptions.length) {
+                            @prescriptionRow(medicationAdministrationItems, x, prescriptions(x))
+                        }else{
+                            @prescriptionRow(medicationAdministrationItems, x, null)
+                        }
+                    }
                 </div>
-
             </div>
             <div class="col-xs-2 col-sm-2 col-md-2">
                 <div class="row">
