@@ -147,6 +147,7 @@ public class MedicalController extends Controller {
         }
         viewModelGet.setPrescriptionItems(prescriptionItemServiceResponse.getResponseObject());
 
+
         //get MedicationAdministrationItems
         ServiceResponse<List<MedicationAdministrationItem>> medicationAdministrationItemServiceResponse =
                 medicationService.retrieveAvailableMedicationAdministrations();
@@ -334,9 +335,50 @@ public class MedicalController extends Controller {
 
         //create patient encounter photos
         photoService.createEncounterPhotos(request().body().asMultipartFormData().getFiles(), patientEncounterItem, viewModelPost);
+        //get prescriptions
+        ServiceResponse<List<PrescriptionItem>> prescriptionItemServiceResponse = searchService.retrieveUnreplacedPrescriptionItems(patientEncounterItem.getId());
+        if (prescriptionItemServiceResponse.hasErrors()) {
+
+            throw new RuntimeException();
+        }
+
+        List<PrescriptionItem> oldPrescriptionList = prescriptionItemServiceResponse.getResponseObject();
+        List<PrescriptionItem> fullPrescriptionList = viewModelPost.getPrescriptions();
+
+        ///System.out.println("start full list");
+        for(int x = 0; x < fullPrescriptionList.size(); x++)
+        {
+            PrescriptionItem item = fullPrescriptionList.get(x);
+          //  System.out.println(item.getAmount());
+            //System.out.println(item.getMedicationName());
+           // System.out.println(fullPrescriptionList.get(x).getAdministrationName());
+            //  System.out.println("|||||");
+        }
+       // System.out.println("end full list");
+       // System.out.println("start old list");
+        for(int x = 0; x < oldPrescriptionList.size(); x++)
+        {
+            PrescriptionItem item = oldPrescriptionList.get(x);
+        //    System.out.println(item.getAmount());
+           // System.out.println(item.getOriginalMedicationName());
+           // System.out.println(oldPrescriptionList.get(x).getMedicationName());
+        }
+        //System.out.println("end old list");
+
+
+        Map<Integer, Integer> prescriptionMap = new HashMap<>();
+        for(int i = 0; i<oldPrescriptionList.size(); i++){
+            System.out.println(oldPrescriptionList.get(i).getAmount() + " -> " + fullPrescriptionList.get(i).getAmount());
+            prescriptionMap.put(fullPrescriptionList.get(i).getId(), oldPrescriptionList.get(i).getId());
+        }
+        medicationService.replacePrescriptions(prescriptionMap);
+        List<PrescriptionItem> prescriptionList = fullPrescriptionList
+                .stream()
+                .skip(oldPrescriptionList.size())
+                .collect(Collectors.toList());
 
         //get the prescriptions that have an ID (e.g. prescriptions that exist in the dictionary).
-        List<PrescriptionItem> prescriptionItemsWithID = viewModelPost.getPrescriptions()
+        List<PrescriptionItem> prescriptionItemsWithID = prescriptionList
                 .stream()
                 .filter(prescription -> prescription.getMedicationID() != null)
                 .collect(Collectors.toList());
@@ -361,7 +403,7 @@ public class MedicalController extends Controller {
 
         // get the prescriptions that DO NOT have an ID (e.g. prescriptions that DO NOT exist in the dictionary).
         // also ignore new new prescriptions that do not have a name
-        List<PrescriptionItem> prescriptionItemsWithoutID = viewModelPost.getPrescriptions()
+        List<PrescriptionItem> prescriptionItemsWithoutID = prescriptionList
                 .stream()
                 .filter( prescription -> prescription.getMedicationID() == null )
                 .filter( prescription -> StringUtils.isNotNullOrWhiteSpace( prescription.getMedicationName() ) )
