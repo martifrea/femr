@@ -4,6 +4,7 @@
 )
 
 @import femr.ui.views.html.partials.helpers.outputStringOrNA
+@import femr.common.models.PrescriptionItem
 
 @if( script == null ) {
 @* Will get submitted - new prescriptions in medical and replaced prescriptions in pharmacy *@
@@ -35,16 +36,17 @@
 
 }else{
 @* won't get submitted, the prescription has already been prescribed for the encounter (happens in medical) *@
-    <div class="prescription-grid prescriptionRow prescriptionInput">
 
-        <input class='medicationID' value='@script.getMedicationID' type='hidden' />
+    <div class="prescription-grid prescriptionRow prescriptionInput">
+        <input class='prescriptionTest' name="prescriptions[@index]" value="@(new PrescriptionItem())" type="hidden" />
+        <input class='medicationID'  name='prescriptions[@index].medicationID' value='@script.getMedicationID'  type='hidden' />
 
         <span class="prescription-field prescriptionName">
-            <input type='text' class='medicationName form-control input-sm' value="@script.getName (@outputStringOrNA(script.getMedicationForm).toString().trim())" readonly />
+            <input type='text'  name="prescriptions[@index].medicationName" class='medicationName form-control input-sm' value="@script.getName (@outputStringOrNA(script.getMedicationForm).toString().trim())"/>
         </span>
         <span class="prescription-field prescriptionAdministration">
 
-            <select class="administrationName form-control" readonly disabled>
+            <select class="administrationName form-control" name="prescriptions[@index].administrationID">
                 <option value="-1">- Select -</option>
                 @for(item <- medicationAdministrationItems) {
                     <option value="@item.getId" data-modifier="@item.getDailyModifier" @if( item.getId == script.getAdministrationID ){ selected="selected" }>@item.getName</option>
@@ -52,10 +54,10 @@
             </select>
         </span>
         <span class="prescription-field prescriptionAdministrationDays">
-            <input type="number" class="form-control input-sm" readonly />
+            <input type="number" class="form-control input-sm"/>
         </span>
         <span class="prescription-field prescriptionAmount">
-            <input type="number" class="form-control input-sm" value='@script.getAmount' readonly />
+            <input  type="number" name="prescriptions[@index].amount" class="form-control input-sm" value='@script.getAmount'/>
         </span>
     </div>
 }
