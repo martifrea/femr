@@ -16,14 +16,39 @@
      along with fEMR.  If not, see <http://www.gnu.org/licenses/>. If
      you have any questions, contact <info@teamfemr.org>.
 */
-package femr.util.dependencyinjection.providers;
+package femr.data.models.mysql.concepts;
 
-import com.google.inject.Provider;
-import femr.data.models.mysql.MedicationActiveDrug;
+import femr.data.models.core.IConceptDiagnosis;
 
-public class MedicationActiveDrugProvider implements Provider<MedicationActiveDrug> {
+import javax.persistence.*;
+
+@Entity
+@Table(name = "concept_diagnoses")
+public class ConceptDiagnosis implements IConceptDiagnosis {
+
+    @Id
+    @Column(name = "id", unique = true, nullable = false)
+    private int id;
+    @Column(name = "name", nullable = false)
+    private String name;
+
     @Override
-    public MedicationActiveDrug get() {
-        return new MedicationActiveDrug();
+    public int getId() {
+        return id;
+    }
+
+    @Override
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public void setName(String name) {
+        this.name = name;
     }
 }

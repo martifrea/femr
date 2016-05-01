@@ -18,6 +18,9 @@
 */
 package femr.common.models;
 
+import femr.util.calculations.dateUtils;
+import femr.util.stringhelpers.StringUtils;
+
 import java.util.Date;
 
 public class PatientItem {
@@ -46,6 +49,72 @@ public class PatientItem {
     //added for femr-136 - dual unit display
     private Float weightDual;
 
+    public PatientItem (int id,
+                                         String firstName,
+                                         String lastName,
+                                         String city,
+                                         String address,
+                                         int userId,
+                                         Date age,
+                                         String sex,
+                                         Integer weeksPregnant,
+                                         Integer heightFeet,
+                                         Integer heightInches,
+                                         Float weight,
+                                         String pathToPatientPhoto,
+                                         Integer photoId,
+                                         String ageClassification) {
+
+        if (StringUtils.isNullOrWhiteSpace(firstName) ||
+                StringUtils.isNullOrWhiteSpace(lastName) ||
+                StringUtils.isNullOrWhiteSpace(city)) {
+
+            throw new IllegalArgumentException("Missing arguements for creating a new patient item");
+        }
+        //required field
+
+        this.setId(id);
+        this.setFirstName(firstName);
+        this.setLastName(lastName);
+        this.setYearsOld(dateUtils.getYearsInteger(age));
+        this.setMonthsOld(dateUtils.getMonthsInteger(age));
+        this.setCity(city);
+        this.setUserId(userId);
+        //optional fields
+        if (StringUtils.isNotNullOrWhiteSpace(address))
+            this.setAddress(address);
+        if (StringUtils.isNotNullOrWhiteSpace(sex))
+            this.setSex(sex);
+        if (age != null) {
+
+            this.setAge(dateUtils.getAge(age));//age (int)
+            this.setBirth(age);//date of birth(date)
+            this.setFriendlyDateOfBirth(dateUtils.getFriendlyDate(age));
+
+        }
+        if (StringUtils.isNotNullOrWhiteSpace(pathToPatientPhoto) && photoId != null) {
+
+            this.setPathToPhoto(pathToPatientPhoto);
+            this.setPhotoId(photoId);
+        }
+        if (weeksPregnant != null)
+            this.setWeeksPregnant(weeksPregnant);
+
+        if (heightFeet != null)
+            this.setHeightFeet(heightFeet);
+        else
+            this.setHeightFeet(0);
+
+        if (heightInches != null)
+            this.setHeightInches(heightInches);
+        else
+            this.setHeightInches(0);
+
+        if (weight != null)
+            this.setWeight(weight);
+    }
+    
+    
     public PatientItem(){
         //default empty values
         this.Id = 0;

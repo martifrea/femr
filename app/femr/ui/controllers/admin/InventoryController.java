@@ -18,14 +18,10 @@
 */
 package femr.ui.controllers.admin;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.inject.Inject;
-import femr.business.services.core.IMedicationService;
-import femr.business.services.core.IMissionTripService;
+import femr.business.services.core.*;
 import femr.common.dtos.CurrentUser;
 import femr.common.dtos.ServiceResponse;
-import femr.business.services.core.IInventoryService;
-import femr.business.services.core.ISessionService;
 import femr.common.models.MissionTripItem;
 import femr.data.models.mysql.Roles;
 import femr.ui.helpers.security.AllowedRoles;
@@ -47,18 +43,20 @@ import java.util.List;
 public class InventoryController extends Controller {
 
     private final Form<InventoryViewModelPost> inventoryViewModelPostForm = Form.form(InventoryViewModelPost.class);
-    private final Form<InventoryViewModelDataQuery> inventoryViewModelDataQueryForm = Form.form(InventoryViewModelDataQuery.class);
+    private final IConceptService conceptService;
     private final IInventoryService inventoryService;
     private final IMedicationService medicationService;
     private final IMissionTripService missionTripService;
     private final ISessionService sessionService;
 
     @Inject
-    public InventoryController(IInventoryService inventoryService,
+    public InventoryController(IConceptService conceptService,
+                               IInventoryService inventoryService,
                                IMedicationService medicationService,
                                IMissionTripService missionTripService,
                                ISessionService sessionService) {
 
+        this.conceptService = conceptService;
         this.inventoryService = inventoryService;
         this.medicationService = medicationService;
         this.missionTripService = missionTripService;
@@ -97,6 +95,13 @@ public class InventoryController extends Controller {
             viewModel.setMedications( new ArrayList<>() );
         }
 
+        ServiceResponse<List<MedicationItem>> conceptMedicationServiceResponse = conceptService.retrieveAllMedicationConcepts();
+        if (conceptMedicationServiceResponse.hasErrors()) {
+            throw new RuntimeException();
+        } else {
+            viewModel.setConceptMedications(conceptMedicationServiceResponse.getResponseObject());
+        }
+
         ServiceResponse<List<String>> availableMedicationUnitsResponse = medicationService.retrieveAvailableMedicationUnits();
         if (availableMedicationUnitsResponse.hasErrors()) {
             throw new RuntimeException();
@@ -123,13 +128,15 @@ public class InventoryController extends Controller {
 
         Form<InventoryViewModelPost> form = inventoryViewModelPostForm.bindFromRequest();
         if (form.hasErrors()) {
-            System.out.println(form.errors().toString());
+            return redirect("/admin/inventory");
+
+            //System.out.println(form.errors().toString());
             //if the request gets past the javascript validation and fails validation in the viewmodel, then
             //don't proceed to save anything. In the future, this should alert the user as to what they did
             //wrong.
-            /* Should be validated client side and server-side throws error */
-            throw new RuntimeException();
-            //return redirect("/admin/inventory");
+            /* Should be validated client side and server-side throws error
+            //throw new RuntimeException();    */
+
         }
 
         InventoryViewModelPost inventoryViewModelPost = form.bindFromRequest().get();
@@ -141,78 +148,91 @@ public class InventoryController extends Controller {
         // assumes medication strength is a good indicator of how many
         // strength/unit/ingredients (active ingredietns) are involved
         // *denominator field not taken into consideration - always false
-        for (int activeIngredientIndex = 0;
-             activeIngredientIndex < inventoryViewModelPost.getMedicationStrength().size();
-             activeIngredientIndex++) {
+        if (inventoryViewModelPost.getMedicationStrength().get(0) != null) {
+            for (int genericIndex = 0; genericIndex < inventoryViewModelPost.getMedicationStrength().size(); genericIndex++) {
 
-            if (inventoryViewModelPost.getMedicationIngredient().get(activeIngredientIndex) != null &&
-                    inventoryViewModelPost.getMedicationUnit().get(activeIngredientIndex) != null &&
-                    inventoryViewModelPost.getMedicationStrength().get(activeIngredientIndex) != null) {
+                if (inventoryViewModelPost.getMedicationIngredient().get(genericIndex) != null &&
+                        inventoryViewModelPost.getMedicationUnit().get(genericIndex) != null &&
+                        inventoryViewModelPost.getMedicationStrength().get(genericIndex) != null) {
 
-                medicationItem.addActiveIngredient(
-                        inventoryViewModelPost.getMedicationIngredient().get(activeIngredientIndex),
-                        inventoryViewModelPost.getMedicationUnit().get(activeIngredientIndex),
-                        inventoryViewModelPost.getMedicationStrength().get(activeIngredientIndex),
-                        false
-                );
+                    medicationItem.addActiveIngredient(
+                            inventoryViewModelPost.getMedicationIngredient().get(genericIndex),
+                            inventoryViewModelPost.getMedicationUnit().get(genericIndex),
+                            inventoryViewModelPost.getMedicationStrength().get(genericIndex),
+                            false
+                    );
+                }
+            }
+            ServiceResponse<MedicationItem> createMedicationServiceResponse = medicationService.createMedication(
+                    inventoryViewModelPost.getMedicationName(),
+                    inventoryViewModelPost.getMedicationForm(),
+                    medicationItem.getActiveIngredients());
+            // check for errors before updating the quantity to ensure a medication ID has been returned in the response
+            // object.
+            if (createMedicationServiceResponse.hasErrors()) {
+
+                return internalServerError();
+            }
+            ServiceResponse<MedicationItem> setQuantityServiceResponse = inventoryService.setQuantityTotal(
+                    createMedicationServiceResponse.getResponseObject().getId(),
+                    currentUser.getTripId(),
+                    inventoryViewModelPost.getMedicationQuantity());
+
+            if (setQuantityServiceResponse.hasErrors()){
+
+                return internalServerError();
             }
         }
 
-        ServiceResponse<MedicationItem> createMedicationServiceResponse = medicationService.createMedication(
-                inventoryViewModelPost.getMedicationName(),
-                inventoryViewModelPost.getMedicationForm(),
-                medicationItem.getActiveIngredients());
 
-        // check for errors before updating the quantity to ensure a medication ID has been returned in the response
-        // object.
-        if (createMedicationServiceResponse.hasErrors()) {
 
-            return internalServerError();
-        }
 
-        ServiceResponse<MedicationItem> setQuantityServiceResponse = inventoryService.setQuantityTotal(
-                createMedicationServiceResponse.getResponseObject().getId(),
-                currentUser.getTripId(),
-                inventoryViewModelPost.getMedicationQuantity());
+        //if just adding medications from the concept dictionary, there won't be any amount involved
+        //and knowledge of the ingredients already exists.
+        if (inventoryViewModelPost.getNewConceptMedicationsForInventory() != null) {
 
-        if (setQuantityServiceResponse.hasErrors()){
+            ServiceResponse<MedicationItem> conceptMedicationServiceResponse;
+            ServiceResponse<MedicationItem> medicationItemServiceResponse;
+            MedicationItem conceptMedicationItem;
 
-            return internalServerError();
+            //for each concept medication id that was sent from the select2 form
+            for (Integer conceptMedicationId : inventoryViewModelPost.getNewConceptMedicationsForInventory()) {
+
+                //get the actual concept MedicationItem from the id that was sent in
+                conceptMedicationServiceResponse = conceptService.retrieveConceptMedication(conceptMedicationId);
+                if (conceptMedicationServiceResponse.hasErrors()) {
+
+                    return internalServerError();
+                } else {
+
+                    //create a non-concept MedicationItem from the concept MedicationItem
+                    conceptMedicationItem = conceptMedicationServiceResponse.getResponseObject();
+                    medicationItemServiceResponse = medicationService.createMedication(conceptMedicationItem.getName(), conceptMedicationItem.getForm(), conceptMedicationItem.getActiveIngredients());
+
+                    if (medicationItemServiceResponse.hasErrors()) {
+
+                        return internalServerError();
+                    }else{
+
+                        ServiceResponse<MedicationItem> setQuantityServiceResponse = inventoryService.setQuantityTotal(medicationItemServiceResponse.getResponseObject().getId(), currentUser.getTripId(), 0);
+                        if (setQuantityServiceResponse.hasErrors()){
+
+                            return internalServerError();
+                        }
+                    }
+
+
+                }
+            }
         }
 
         return redirect("/admin/inventory");
     }
 
-    /* Andre Farah - Updated  */
-    public Result ajaxGet() {
-
-        //Andre Farah - Changed from bindFromRequest() to bind(reqqest().body().asJson()) to properly bind
-        //              the json objects passed from bs_grid
-        Form<InventoryViewModelDataQuery> form = inventoryViewModelDataQueryForm.bind(request().body().asJson());
-        if (form.hasErrors()) {
-            throw new RuntimeException();
-        }
-        InventoryViewModelDataQuery dataQuery = form.get();
-
-        // Get paginated rows
-        ServiceResponse<ObjectNode> medicationServiceResponse = inventoryService.getPaginatedMedicationInventory(
-                dataQuery.getPage_num(),
-                dataQuery.getRows_per_page(),
-                dataQuery.getSorting(), //Andre Farah - Added for Sorting
-                dataQuery.getFilter_rules()// Andre Farah - Added for Filtering
-        );
-        if (medicationServiceResponse.hasErrors()) {
-            throw new RuntimeException();
-        }
-
-        ObjectNode result = medicationServiceResponse.getResponseObject();
-
-        return ok(result);
-
-    }
 
     public Result ajaxDelete(int medicationID, int tripId) {
         ServiceResponse<MedicationItem> inventoryServiceResponse = inventoryService.deleteInventoryMedication(medicationID, tripId);
+
         if (inventoryServiceResponse.hasErrors()) {
             throw new RuntimeException();
         }
@@ -223,12 +243,27 @@ public class InventoryController extends Controller {
     /**
      * Alters medication based on submit.
      */
-    public Result ajaxEdit(int medicationID, int tripId) {
+    public Result ajaxEditCurrent(int medicationID, int tripId) {
         // Get POST data
         DynamicForm df = play.data.Form.form().bindFromRequest();
         int quantity = Integer.parseInt(df.get("quantity"));
 
         ServiceResponse<MedicationItem> inventoryServiceResponse = inventoryService.setQuantityCurrent(medicationID, tripId, quantity);
+        if (inventoryServiceResponse.hasErrors()) {
+            throw new RuntimeException();
+        }
+        return ok("true");
+    }
+
+    /**
+     * Alters medication based on submit.
+     */
+    public Result ajaxEditTotal(int medicationID, int tripId) {
+        // Get POST data
+        DynamicForm df = play.data.Form.form().bindFromRequest();
+        int quantity = Integer.parseInt(df.get("quantity"));
+
+        ServiceResponse<MedicationItem> inventoryServiceResponse = inventoryService.setQuantityTotal(medicationID, tripId, quantity);
         if (inventoryServiceResponse.hasErrors()) {
             throw new RuntimeException();
         }

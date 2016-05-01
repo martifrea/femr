@@ -16,15 +16,22 @@
      along with fEMR.  If not, see <http://www.gnu.org/licenses/>. If
      you have any questions, contact <info@teamfemr.org>.
 */
-package femr.util.dependencyinjection.providers;
+package femr.data.models.core;
 
-import com.google.inject.Provider;
-import femr.data.models.core.IMedicationAdministration;
-import femr.data.models.mysql.MedicationAdministration;
+/**
+ * ConceptPrescriptionAdministration represents the manner in which a medication
+ * is administered to the patient. e.g. orally/into the eyeball/rectally. This is
+ * part of a prescription and is in the database as a concept dictionary to be
+ * referenced.
+ */
+public interface IConceptPrescriptionAdministration {
+    int getId();
 
-public class MedicationAdministrationProvider implements Provider<IMedicationAdministration> {
-    @Override
-    public IMedicationAdministration get() {
-        return new MedicationAdministration();
-    }
+    String getName();
+
+    void setName(String name);
+
+    float getDailyModifier();
+
+    void setDailyModifier(float modifier);
 }

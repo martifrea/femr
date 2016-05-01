@@ -38,9 +38,16 @@ public class ServiceResponse<T> {
     }
 
     public T getResponseObject() {
-        return responseObject;
-    }
 
+            return responseObject;
+    }
+    public T safeResponseObject()
+    {
+        if(hasErrors())
+            throw new RuntimeException();
+        else
+            return responseObject;
+    }
     public void setResponseObject(T responseObject) {
         this.responseObject = responseObject;
     }

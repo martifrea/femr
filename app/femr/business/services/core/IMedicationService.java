@@ -82,7 +82,7 @@ public interface IMedicationService {
     /**
      * Adds a new medication to the system. Does NOT update inventory quantities.
      *
-     * @param name name of the medication, not null
+     * @param name name of the medication, may be null
      * @param form form of the medication (e.g. caps/capsules), may be null
      * @param activeIngredients active ingredients in the medication, may be null
      * @return a service response that contains a MedicationItem representing the medication that was just created
@@ -97,14 +97,6 @@ public interface IMedicationService {
      * @return
      */
     ServiceResponse<MedicationItem> deleteMedication(int medicationID);
-
-    /**
-     * Retrieves a list of all medications in the system, excluding duplicates.
-     *
-     * @return a service response that contains a list of Strings
-     * and/or errors if they exist.
-     */
-    ServiceResponse<List<String>> retrieveAllMedications();
 
     /**
      * Retrieve a list of all available Administrations for medication
@@ -144,6 +136,7 @@ public interface IMedicationService {
      * @return a service response that contains a list of ObjectNode's
      * and/or errors if they exist
      */
+//<<<<<<< HEAD
     ServiceResponse<ObjectNode> retrieveAllMedicationsWithID();
 
 
@@ -154,4 +147,7 @@ public interface IMedicationService {
         Retrieves a Imedication item by its id
      */
     ServiceResponse<IMedication> retrieveByID(int id);
+//=======
+    ServiceResponse<ObjectNode> retrieveAllMedicationsWithID(Integer tripId);
+//>>>>>>> 5bb025957311c49993ce9100b6e613e5af1ba60f
 }

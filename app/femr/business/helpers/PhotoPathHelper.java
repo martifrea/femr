@@ -25,7 +25,7 @@ import org.joda.time.DateTime;
 
 import java.io.File;
 
-public class LogicDoer {
+public class PhotoPathHelper {
 
     /**
      * Attempts to retrieve the user specified photo path.
@@ -88,36 +88,4 @@ public class LogicDoer {
 
     }
 
-
-    /**
-     * I wonder what this method does
-     *
-     * @param patientEncounter patient encounter
-     * @return probably returns true if the encounter is closed
-     */
-    public static boolean isEncounterClosed(IPatientEncounter patientEncounter) {
-        DateTime dateOfMedicalVisit = patientEncounter.getDateOfMedicalVisit();
-        DateTime dateOfPharmacyVisit = patientEncounter.getDateOfPharmacyVisit();
-        Boolean isClosed = false;
-        DateTime dateNow = dateUtils.getCurrentDateTime();
-
-        if (dateOfPharmacyVisit != null) {
-            isClosed = true;
-
-        } else if (dateOfMedicalVisit != null) {
-            //give 1 day before closing
-            DateTime dayAfterMedicalVisit = dateOfMedicalVisit.plusDays(1);
-            if (dateNow.isAfter(dayAfterMedicalVisit)) {
-                isClosed = true;
-            }
-
-        } else {
-            //give 2 days before closing
-            DateTime dayAfterAfterEncounter = patientEncounter.getDateOfTriageVisit().plusDays(2);
-            if (dateNow.isAfter(dayAfterAfterEncounter)) {
-                isClosed = true;
-            }
-        }
-        return isClosed;
-    }
 }

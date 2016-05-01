@@ -16,18 +16,28 @@
      along with fEMR.  If not, see <http://www.gnu.org/licenses/>. If
      you have any questions, contact <info@teamfemr.org>.
 */
-package femr.data.models.core;
+package femr.business.services.core;
 
-/**
- * MedicationActiveDrugName is the name of the active drug inside
- * a medication. e.g. acetominophen/hydrocodone/etc
- */
-public interface IMedicationActiveDrugName {
-    int getId();
 
-    void setId(int id);
+import femr.common.dtos.ServiceResponse;
+import femr.common.models.MedicationItem;
 
-    String getName();
+import java.util.List;
 
-    void setName(String name);
+public interface IConceptService {
+
+    /**
+     * Retrieves a list of all medications in the concept dictionary that are
+     * not deleted
+     * @return MedicationItem containing all of the medications in the concept dictionary.
+     */
+    ServiceResponse<List<MedicationItem>> retrieveAllMedicationConcepts();
+
+    /**
+     * Retreives a medication in the concept dictionary.
+     *
+     * @param conceptMedicationID id of the concept medication to retrieve
+     * @return MedicationItem with the id provided or null if doesn't exist/error
+     */
+    ServiceResponse<MedicationItem> retrieveConceptMedication(int conceptMedicationID);
 }

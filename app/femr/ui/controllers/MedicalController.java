@@ -117,13 +117,8 @@ public class MedicalController extends Controller {
 
         //Get Patient Encounter
         PatientEncounterItem patientEncounter;
-        ServiceResponse<PatientEncounterItem> patientEncounterItemServiceResponse = searchService.retrieveRecentPatientEncounterItemByPatientId(patientId);
-        if (patientEncounterItemServiceResponse.hasErrors()) {
-
-            throw new RuntimeException();
-        }
-        patientEncounter = patientEncounterItemServiceResponse.getResponseObject();
-        viewModelGet.setPatientEncounterItem(patientEncounter);
+        patientEncounter = searchService.retrieveRecentPatientEncounterItemByPatientId(patientId).safeResponseObject();
+        viewModelGet.setPatientEncounterItem(searchService.retrieveRecentPatientEncounterItemByPatientId(patientId).safeResponseObject());
 
         //verify encounter is still open
         if (patientEncounter.getIsClosed()) {
@@ -132,67 +127,20 @@ public class MedicalController extends Controller {
         }
 
         //get patient
-        ServiceResponse<PatientItem> patientItemServiceResponse = searchService.retrievePatientItemByPatientId(patientId);
-        if (patientItemServiceResponse.hasErrors()) {
-
-            throw new RuntimeException();
-        }
-        viewModelGet.setPatientItem(patientItemServiceResponse.getResponseObject());
-
+        viewModelGet.setPatientItem(searchService.retrievePatientItemByPatientId(patientId).safeResponseObject());
         //get prescriptions
-        ServiceResponse<List<PrescriptionItem>> prescriptionItemServiceResponse = searchService.retrieveUnreplacedPrescriptionItems(patientEncounter.getId());
-        if (prescriptionItemServiceResponse.hasErrors()) {
-
-            throw new RuntimeException();
-        }
-        viewModelGet.setPrescriptionItems(prescriptionItemServiceResponse.getResponseObject());
-
+        viewModelGet.setPrescriptionItems(searchService.retrieveUnreplacedPrescriptionItems(patientEncounter.getId()).safeResponseObject());
         //get MedicationAdministrationItems
-        ServiceResponse<List<MedicationAdministrationItem>> medicationAdministrationItemServiceResponse =
-                medicationService.retrieveAvailableMedicationAdministrations();
-        if (medicationAdministrationItemServiceResponse.hasErrors()) {
-            throw new RuntimeException();
-        }
-        viewModelGet.setMedicationAdministrationItems(medicationAdministrationItemServiceResponse.getResponseObject());
-
+        viewModelGet.setMedicationAdministrationItems(medicationService.retrieveAvailableMedicationAdministrations().safeResponseObject());
         //get problems
-        ServiceResponse<List<ProblemItem>> problemItemServiceResponse = encounterService.retrieveProblemItems(patientEncounter.getId());
-        if (problemItemServiceResponse.hasErrors()) {
+        viewModelGet.setProblemItems(encounterService.retrieveProblemItems(patientEncounter.getId()).safeResponseObject());
 
-            throw new RuntimeException();
-        }
-        viewModelGet.setProblemItems(problemItemServiceResponse.getResponseObject());
-
-        //get vitals
-        ServiceResponse<VitalMultiMap> vitalMapResponse = vitalService.retrieveVitalMultiMap(patientEncounter.getId());
-        if (vitalMapResponse.hasErrors()) {
-
-            throw new RuntimeException();
-        }
 
         //get all fields and their values
-        ServiceResponse<TabFieldMultiMap> tabFieldMultiMapResponse = tabService.retrieveTabFieldMultiMap(patientEncounter.getId());
-        if (tabFieldMultiMapResponse.hasErrors()) {
+        TabFieldMultiMap tabFieldMultiMap = tabService.retrieveTabFieldMultiMap(patientEncounter.getId()).safeResponseObject();
+        Map<String, List<String>> tabFieldToTabMapping = tabService.retrieveTabFieldToTabMapping(false, false).safeResponseObject();
+        List<TabItem> tabItems = tabService.retrieveAvailableTabs(false).safeResponseObject();
 
-            throw new RuntimeException();
-        }
-        TabFieldMultiMap tabFieldMultiMap = tabFieldMultiMapResponse.getResponseObject();
-        ServiceResponse<List<TabItem>> tabItemServiceResponse = tabService.retrieveAvailableTabs(false);
-        if (tabItemServiceResponse.hasErrors()) {
-
-            throw new RuntimeException();
-        }
-
-        ServiceResponse<Map<String, List<String>>> tabFieldToTabMappingServiceResponse = tabService.retrieveTabFieldToTabMapping(false, false);
-        if (tabFieldToTabMappingServiceResponse.hasErrors()){
-
-            throw new RuntimeException();
-        }
-        Map<String, List<String>> tabFieldToTabMapping = tabFieldToTabMappingServiceResponse.getResponseObject();
-
-
-
-        List<TabItem> tabItems = tabItemServiceResponse.getResponseObject();
         //match the fields to their respective tabs
         for (TabItem tabItem : tabItems) {
 
@@ -217,20 +165,14 @@ public class MedicalController extends Controller {
         viewModelGet.setTabItems(tabItems);
         viewModelGet.setChiefComplaints(tabFieldMultiMap.getChiefComplaintList());
 
-        ServiceResponse<List<PhotoItem>> photoListResponse = photoService.retrieveEncounterPhotos(patientEncounter.getId());
-        if (photoListResponse.hasErrors()) {
+        viewModelGet.setPhotos(photoService.retrieveEncounterPhotos(patientEncounter.getId()).safeResponseObject());
 
-            throw new RuntimeException();
-        } else {
-
-            viewModelGet.setPhotos(photoListResponse.getResponseObject());
-        }
 
         ServiceResponse<SettingItem> response = searchService.retrieveSystemSettings();
         viewModelGet.setSettings(response.getResponseObject());
 
         //Alaa Serhan
-        VitalMultiMap vitalMultiMap = vitalMapResponse.getResponseObject();
+        VitalMultiMap vitalMultiMap = vitalService.retrieveVitalMultiMap(patientEncounter.getId()).safeResponseObject();
 
         return ok(edit.render(currentUserSession, vitalMultiMap, viewModelGet));
     }
@@ -244,13 +186,8 @@ public class MedicalController extends Controller {
      */
     public Result prescriptionRowGet( int index )
     {
-        //get MedicationAdministrationItems
-        ServiceResponse<List<MedicationAdministrationItem>> medicationAdministrationItemServiceResponse =
-                medicationService.retrieveAvailableMedicationAdministrations();
-        if (medicationAdministrationItemServiceResponse.hasErrors()) {
-            throw new RuntimeException();
-        }
-        List<MedicationAdministrationItem> items = medicationAdministrationItemServiceResponse.getResponseObject();
+        //get MedicationAdministrationItem
+        List<MedicationAdministrationItem> items = medicationService.retrieveAvailableMedicationAdministrations().safeResponseObject();
 
         return ok( prescriptionRow.render( items, index, null ) );
     }
@@ -262,18 +199,9 @@ public class MedicalController extends Controller {
         EditViewModelPost viewModelPost = createViewModelPostForm.bindFromRequest().get();
 
         //get current patient
-        ServiceResponse<PatientItem> patientItemServiceResponse = searchService.retrievePatientItemByPatientId(patientId);
-        if (patientItemServiceResponse.hasErrors()) {
-            throw new RuntimeException();
-        }
-        PatientItem patientItem = patientItemServiceResponse.getResponseObject();
-
+        PatientItem patientItem = searchService.retrievePatientItemByPatientId(patientId).safeResponseObject();
         //get current encounter
-        ServiceResponse<PatientEncounterItem> patientEncounterServiceResponse = searchService.retrieveRecentPatientEncounterItemByPatientId(patientId);
-        if (patientEncounterServiceResponse.hasErrors()) {
-            throw new RuntimeException();
-        }
-        PatientEncounterItem patientEncounterItem = patientEncounterServiceResponse.getResponseObject();
+        PatientEncounterItem patientEncounterItem =searchService.retrieveRecentPatientEncounterItemByPatientId(patientId).safeResponseObject();
         patientEncounterItem = encounterService.checkPatientInToMedical(patientEncounterItem.getId(), currentUserSession.getId()).getResponseObject();
 
         //get and save problems
@@ -345,6 +273,11 @@ public class MedicalController extends Controller {
         ServiceResponse<PrescriptionItem> createPrescriptionServiceResponse;
         for (PrescriptionItem prescriptionItem : prescriptionItemsWithID){
 
+            //The POST data sends -1 if an administration ID is not set. Null is more appropriate for the
+            //service layer
+            if (prescriptionItem.getAdministrationID() == -1)
+                prescriptionItem.setAdministrationID(null);
+
             createPrescriptionServiceResponse = medicationService.createPrescription(
                     prescriptionItem.getMedicationID(),
                     prescriptionItem.getAdministrationID(),
@@ -368,6 +301,11 @@ public class MedicalController extends Controller {
                 .collect(Collectors.toList());
 
         for (PrescriptionItem prescriptionItem : prescriptionItemsWithoutID){
+
+            //The POST data sends -1 if an administration ID is not set. Null is more appropriate for the
+            //service layer
+            if (prescriptionItem.getAdministrationID() == -1)
+                prescriptionItem.setAdministrationID(null);
 
             createPrescriptionServiceResponse = medicationService.createPrescriptionWithNewMedication(
                     prescriptionItem.getMedicationName(),

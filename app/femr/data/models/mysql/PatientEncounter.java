@@ -19,6 +19,7 @@
 package femr.data.models.mysql;
 
 import femr.data.models.core.*;
+import femr.util.calculations.dateUtils;
 import org.joda.time.DateTime;
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -56,13 +57,15 @@ public class PatientEncounter implements IPatientEncounter {
     @JoinColumn(name = "patient_age_classification_id")
     private PatientAgeClassification patientAgeClassification;
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "mission_trip_id")
+    @JoinColumn(name = "mission_trip_id", nullable = true)
     private MissionTrip missionTrip;
     @Column(name = "date_of_diabetes_screen", nullable = true)
     private DateTime dateOfDiabeteseScreen;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id_diabetes_screen", nullable = true)
     private User diabetesScreener;
+    @Column(name="is_diabetes_screened", nullable = true)
+    private Boolean isDiabetesScreened;
 
     @Override
     public int getId() {
@@ -193,5 +196,38 @@ public class PatientEncounter implements IPatientEncounter {
     @Override
     public void setDiabetesScreener(IUser diabetesScreener) {
         this.diabetesScreener = (User) diabetesScreener;
+    }
+
+    @Override
+    public Boolean getIsDiabetesScreened() {return isDiabetesScreened;}
+
+    @Override
+    public void setIsDiabetesScreened(Boolean isDiabetesScreened) {this.isDiabetesScreened = isDiabetesScreened;}
+
+    @Override
+    public boolean isClosed() {
+        DateTime dateOfMedicalVisit = getDateOfMedicalVisit();
+        DateTime dateOfPharmacyVisit = getDateOfPharmacyVisit();
+        Boolean isClosed = false;
+        DateTime dateNow = dateUtils.getCurrentDateTime();
+
+        if (dateOfPharmacyVisit != null) {
+            isClosed = true;
+
+        } else if (dateOfMedicalVisit != null) {
+            //give 1 day before closing
+            DateTime dayAfterMedicalVisit = dateOfMedicalVisit.plusDays(1);
+            if (dateNow.isAfter(dayAfterMedicalVisit)) {
+                isClosed = true;
+            }
+
+        } else {
+            //give 2 days before closing
+            DateTime dayAfterAfterEncounter = getDateOfTriageVisit().plusDays(2);
+            if (dateNow.isAfter(dayAfterAfterEncounter)) {
+                isClosed = true;
+            }
+        }
+        return isClosed;
     }
 }

@@ -18,6 +18,10 @@
 */
 package femr.common.models;
 
+import femr.data.models.core.IMissionTrip;
+import femr.util.calculations.dateUtils;
+import scala.reflect.internal.Trees;
+
 import java.util.Date;
 
 public class MissionTripItem {
@@ -30,6 +34,26 @@ public class MissionTripItem {
     private Date tripEndDate;
     private String friendlyTripEndDate;
     private String teamName; //name of the team running the trip (duplicated in MissionItem)
+
+    public MissionTripItem(IMissionTrip missionTrip)
+    {
+        if(missionTrip == null)
+         throw new IllegalArgumentException("mission trip is null");
+
+       
+        this.setId(missionTrip.getId());
+
+        if (missionTrip.getMissionCity() != null)
+            this.setTripCity(missionTrip.getMissionCity().getName());
+        if (missionTrip.getMissionCity() != null)
+            this.setTripCountry(missionTrip.getMissionCity().getMissionCountry().getName());
+        this.setTripStartDate(missionTrip.getStartDate());
+        this.setFriendlyTripStartDate(dateUtils.getFriendlyDate(missionTrip.getStartDate()));
+        this.setTripEndDate(missionTrip.getEndDate());
+        this.setFriendlyTripEndDate(dateUtils.getFriendlyDate(missionTrip.getEndDate()));
+        this.setTeamName(missionTrip.getMissionTeam().getName());
+    }
+
 
     public int getId() {
         return id;

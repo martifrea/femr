@@ -19,21 +19,15 @@
 package femr.data.models.core;
 
 /**
- * MedicationMeasurementUnit represents the unit of
- * measurement for a medication. e.g. g/mg/mL
+ * MedicationGeneric is the name of the generic drug inside
+ * a medication. e.g. acetominophen/hydrocodone/etc
  */
-public interface IMedicationMeasurementUnit {
+public interface IMedicationGeneric {
     int getId();
+
+    void setId(int id);
 
     String getName();
 
     void setName(String name);
-
-    String getDescription();
-
-    void setDescription(String description);
-
-    Boolean getIsDeleted();
-
-    void setIsDeleted(Boolean isDeleted);
 }

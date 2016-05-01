@@ -73,10 +73,13 @@ hr {
 .fOtherButton{
     background-color: #d3d3d3;
     width: 150px;
-
+    color: #000000;
+    text-align: center;
 }
 .fOtherButton:hover{
     background-color: #bdbdbd;
+    text-decoration: none;
+    color: #000000;
 }
 .fRedButton{
     /*background-color: rgb(198, 0, 0);*/
@@ -616,7 +619,7 @@ input[style] {
     display: block;
 }
 
-/* Custom Typeahead Styles */
+/* Custom Typeahead Styles for patient search on the homepage */
 
 #patientSearchContainer{
 
@@ -703,6 +706,21 @@ input[style] {
 #patientSearchContainer .emptyMessage{
 
     text-align: center;
+}
+
+/* Custom Typeahead Styles for concept medication search on the inventory page*/
+#conceptMedicationSearchContainer{
+    /*width: 100%;*/
+    /*position: relative;*/
+    /*text-align: left;*/
+}
+
+#conceptMedicationSearchContainer input.conceptMedicationSearch{
+
+    width: 75%;
+    height: 44px;
+    line-height: 44px;
+    margin-top: 10px;
 }
 
 

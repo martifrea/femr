@@ -71,4 +71,10 @@ public interface IPatientEncounter {
     IUser getDiabetesScreener();
 
     void setDiabetesScreener(IUser diabetesScreener);
+
+    Boolean getIsDiabetesScreened();
+
+    void setIsDiabetesScreened(Boolean isDiabetesScreened);
+
+    boolean isClosed();
 }
