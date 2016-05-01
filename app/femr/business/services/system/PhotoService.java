@@ -20,7 +20,7 @@ package femr.business.services.system;
 
 import com.avaje.ebean.ExpressionList;
 import com.google.inject.name.Named;
-import femr.business.helpers.LogicDoer;
+import femr.business.helpers.PhotoPathHelper;
 import femr.business.helpers.QueryProvider;
 import femr.business.services.core.IPhotoService;
 import femr.common.IItemModelMapper;
@@ -77,9 +77,9 @@ public class PhotoService implements IPhotoService {
 
     protected void Init() {
         File f;
-        _profilePhotoPath = LogicDoer.getPatientPhotoPath();
+        _profilePhotoPath = PhotoPathHelper.getPatientPhotoPath();
 
-        _encounterPhotoPath = LogicDoer.getMedicalPhotoPath();
+        _encounterPhotoPath = PhotoPathHelper.getMedicalPhotoPath();
 
 
         //Ensure folder exists, if not, create it

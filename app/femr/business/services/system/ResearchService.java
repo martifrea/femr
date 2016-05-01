@@ -23,12 +23,9 @@ import com.avaje.ebean.Query;
 import com.google.gson.Gson;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
-import femr.business.helpers.LogicDoer;
-import femr.business.services.core.IEncounterService;
-import femr.business.services.core.IMissionTripService;
+import femr.business.helpers.PhotoPathHelper;
 import femr.business.services.core.IResearchService;
 import femr.business.helpers.QueryProvider;
-import femr.common.IItemModelMapper;
 import femr.common.dtos.ServiceResponse;
 import femr.common.models.*;
 import femr.data.models.core.research.IResearchEncounter;
@@ -38,11 +35,9 @@ import femr.data.daos.IRepository;
 import femr.data.models.core.*;
 import femr.data.models.mysql.research.ResearchEncounterVital;
 import femr.util.calculations.dateUtils;
-import femr.util.dependencyinjection.providers.MissionCityProvider;
 import femr.util.stringhelpers.CSVWriterGson;
 import femr.util.stringhelpers.GsonFlattener;
 import femr.util.stringhelpers.StringUtils;
-import femr.business.services.system.MissionTripService.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -186,7 +181,7 @@ public class ResearchService implements IResearchService {
         }
 
         // Make File and get path
-        String csvFilePath = LogicDoer.getCsvFilePath();
+        String csvFilePath = PhotoPathHelper.getCsvFilePath();
         //Ensure folder exists, if not, create it
         File f = new File(csvFilePath);
         if (!f.exists())
