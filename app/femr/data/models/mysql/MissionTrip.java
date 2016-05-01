@@ -18,10 +18,12 @@
 */
 package femr.data.models.mysql;
 
+import femr.common.models.MissionTripItem;
 import femr.data.models.core.IMissionCity;
 import femr.data.models.core.IMissionTeam;
 import femr.data.models.core.IMissionTrip;
 import femr.data.models.core.IUser;
+import femr.util.calculations.dateUtils;
 
 
 import javax.persistence.*;
@@ -125,4 +127,6 @@ public class MissionTrip implements IMissionTrip {
         }
 
     }
+
+
 }
