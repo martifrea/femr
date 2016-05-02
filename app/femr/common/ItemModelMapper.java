@@ -134,7 +134,7 @@ public class ItemModelMapper implements IItemModelMapper {
 
 
         MissionTripItem missionTripItem = new MissionTripItem(missionTrip);
-        
+
         return missionTripItem;
     }
 
@@ -244,47 +244,9 @@ public class ItemModelMapper implements IItemModelMapper {
                                                    MedicationInventory medicationInventory, Boolean isCounseled) {
 
 
-        PrescriptionItem prescriptionItem = new PrescriptionItem();
+        PrescriptionItem prescriptionItem = new PrescriptionItem(id,name,originalMedicationName,firstName,lastName,
+                                                    medicationAdministration,amount,medication,medicationInventory,isCounseled);
 
-        prescriptionItem.setId(id);
-        prescriptionItem.setName(name);
-        if (originalMedicationName != null)
-            prescriptionItem.setOriginalMedicationName(originalMedicationName);
-        if (StringUtils.isNotNullOrWhiteSpace(firstName))
-            prescriptionItem.setPrescriberFirstName(firstName);
-        if (StringUtils.isNotNullOrWhiteSpace(lastName))
-            prescriptionItem.setPrescriberLastName(lastName);
-
-        if (medicationAdministration != null) {
-            prescriptionItem.setAdministrationID(medicationAdministration.getId());
-            prescriptionItem.setAdministrationName(medicationAdministration.getName());
-            prescriptionItem.setAdministrationModifier(medicationAdministration.getDailyModifier());
-        }
-        prescriptionItem.setAmount(amount);
-
-        if (isCounseled != null)
-            prescriptionItem.setCounseled(isCounseled);
-
-        if (medication != null) {
-
-            MedicationItem medicationItem;
-            if( medicationInventory != null ){
-
-                medicationItem = createMedicationItem(medication, medicationInventory.getQuantityCurrent(), medicationInventory.getQuantityInitial(), null);
-                prescriptionItem.setMedicationRemaining( medicationInventory.getQuantityCurrent() );
-            }
-            else{
-                medicationItem = createMedicationItem(medication, null, null, null);
-            }
-
-            prescriptionItem.setMedicationID(medicationItem.getId());
-
-            if (medicationItem.getForm() != null)
-                prescriptionItem.setMedicationForm(medicationItem.getForm());
-
-            if (medicationItem.getActiveIngredients() != null)
-                prescriptionItem.setMedicationActiveDrugs(medicationItem.getActiveIngredients());
-        }
         return prescriptionItem;
     }
 

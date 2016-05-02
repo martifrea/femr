@@ -18,6 +18,12 @@
 */
 package femr.common.models;
 
+import femr.common.ItemModelMapper;
+import femr.data.models.core.IConceptPrescriptionAdministration;
+import femr.data.models.core.IMedication;
+import femr.data.models.mysql.MedicationInventory;
+import femr.util.stringhelpers.StringUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +47,53 @@ public class PrescriptionItem {
     //was the checkbox checked for this prescription indicating the patient was counseled by the pharmacist
     private Boolean isCounseled;
 
+    public PrescriptionItem (int id, String name, String originalMedicationName, String firstName, String lastName,
+                                                   IConceptPrescriptionAdministration medicationAdministration, Integer amount, IMedication medication,
+                                                   MedicationInventory medicationInventory, Boolean isCounseled) {
+
+        medicationActiveDrugs = new ArrayList<MedicationItem.ActiveIngredient>();
+        ItemModelMapper mapper = new ItemModelMapper();
+        this.setId(id);
+        this.setName(name);
+        if (originalMedicationName != null)
+            this.setOriginalMedicationName(originalMedicationName);
+        if (StringUtils.isNotNullOrWhiteSpace(firstName))
+            this.setPrescriberFirstName(firstName);
+        if (StringUtils.isNotNullOrWhiteSpace(lastName))
+            this.setPrescriberLastName(lastName);
+
+        if (medicationAdministration != null) {
+            this.setAdministrationID(medicationAdministration.getId());
+            this.setAdministrationName(medicationAdministration.getName());
+            this.setAdministrationModifier(medicationAdministration.getDailyModifier());
+        }
+        this.setAmount(amount);
+
+        if (isCounseled != null)
+            this.setCounseled(isCounseled);
+
+        if (medication != null) {
+
+            MedicationItem medicationItem;
+            if( medicationInventory != null ){
+
+                medicationItem = mapper.createMedicationItem(medication, medicationInventory.getQuantityCurrent(), medicationInventory.getQuantityInitial(), null);
+                this.setMedicationRemaining( medicationInventory.getQuantityCurrent() );
+            }
+            else{
+                medicationItem = mapper.createMedicationItem(medication, null, null, null);
+            }
+
+            this.setMedicationID(medicationItem.getId());
+
+            if (medicationItem.getForm() != null)
+                this.setMedicationForm(medicationItem.getForm());
+
+            if (medicationItem.getActiveIngredients() != null)
+                this.setMedicationActiveDrugs(medicationItem.getActiveIngredients());
+        }
+    }
+    
     public PrescriptionItem(String name){
         medicationActiveDrugs = new ArrayList<MedicationItem.ActiveIngredient>();
         this.name = name;
