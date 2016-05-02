@@ -1,17 +1,14 @@
 /*
      fEMR - fast Electronic Medical Records
      Copyright (C) 2014  Team fEMR
-
      fEMR is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
      the Free Software Foundation, either version 3 of the License, or
      (at your option) any later version.
-
      fEMR is distributed in the hope that it will be useful,
      but WITHOUT ANY WARRANTY; without even the implied warranty of
      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
      GNU General Public License for more details.
-
      You should have received a copy of the GNU General Public License
      along with fEMR.  If not, see <http://www.gnu.org/licenses/>. If
      you have any questions, contact <info@teamfemr.org>.
@@ -57,13 +54,12 @@ public class PDFController extends Controller {
                          IVitalService vitalService) {
 
         this.searchService = searchService;
-        this.encounterService= encounterService;
+        this.encounterService = encounterService;
         this.tabService = tabService;
         this.vitalService = vitalService;
     }
 
     public Result index(int encounterId) {
-
         response().setContentType("application/pdf");
         return ok(buildPDF(encounterId));
     }
@@ -76,47 +72,12 @@ public class PDFController extends Controller {
      */
     private byte[] buildPDF(int encounterId) {
 
-        // Get Patient Encounter
-        ServiceResponse<PatientEncounterItem> patientEncounterItemServiceResponse = searchService.retrievePatientEncounterItemByEncounterId(encounterId);
-        if (patientEncounterItemServiceResponse.hasErrors()){
-            throw new RuntimeException();
-        }
-        PatientEncounterItem patientEncounter = patientEncounterItemServiceResponse.getResponseObject();
-
-        // Get Patient
-        ServiceResponse<PatientItem> patientItemServiceResponse = searchService.retrievePatientItemByEncounterId(encounterId);
-        if (patientItemServiceResponse.hasErrors()){
-            throw new RuntimeException();
-        }
-        PatientItem patientItem = patientItemServiceResponse.getResponseObject();
-
-        // Get Vitals for Encounter
-        ServiceResponse<VitalMultiMap> vitalMultiMapServiceResponse = vitalService.retrieveVitalMultiMap(encounterId);
-        if (vitalMultiMapServiceResponse.hasErrors()){
-            throw new RuntimeException();
-        }
-        VitalMultiMap patientVitals = vitalMultiMapServiceResponse.getResponseObject();
-
-        // Get TabFields for Encounter
-        ServiceResponse<TabFieldMultiMap> patientEncounterTabFieldResponse = tabService.retrieveTabFieldMultiMap(encounterId);
-        if (patientEncounterTabFieldResponse.hasErrors()){
-            throw new RuntimeException();
-        }
-        TabFieldMultiMap tabFieldMultiMap = patientEncounterTabFieldResponse.getResponseObject();
-
-        // Get Prescriptions
-        ServiceResponse<List<PrescriptionItem>> prescriptionItemServiceResponse = searchService.retrieveDispensedPrescriptionItems(encounterId);
-        if (prescriptionItemServiceResponse.hasErrors()){
-            throw new RuntimeException();
-        }
-        List<PrescriptionItem> prescriptions = prescriptionItemServiceResponse.getResponseObject();
-
-        // Get Problems
-        ServiceResponse<List<ProblemItem>> problemItemServiceResponse = encounterService.retrieveProblemItems(encounterId);
-        if (problemItemServiceResponse.hasErrors()){
-            throw new RuntimeException();
-        }
-        List<ProblemItem> problems = problemItemServiceResponse.getResponseObject();
+        PatientEncounterItem patientEncounter = searchService.retrievePatientEncounterItemByEncounterId(encounterId).safeResponseObject();
+        PatientItem patientItem = searchService.retrievePatientItemByEncounterId(encounterId).safeResponseObject();
+        VitalMultiMap patientVitals = vitalService.retrieveVitalMultiMap(encounterId).safeResponseObject();
+        TabFieldMultiMap tabFieldMultiMap = tabService.retrieveTabFieldMultiMap(encounterId).safeResponseObject();
+        List<PrescriptionItem> prescriptions = searchService.retrieveDispensedPrescriptionItems(encounterId).safeResponseObject();
+        List<ProblemItem> problems = encounterService.retrieveProblemItems(encounterId).safeResponseObject();
 
         // Will eventually output the PDF -- all 3 lines below are needed
         ByteArrayOutputStream pdfStream = new ByteArrayOutputStream();
@@ -133,22 +94,16 @@ public class PDFController extends Controller {
             document.addCreator("fEMR");
             document.addTitle("Patient Report");
 
-            // Add the header to the page
             document.add(createHeaderTable());
 
-            // Add basic patient info
             document.add(createPatientInfoTable(patientItem));
 
-            // Add Encounter Info Table
             document.add(createEncounterInfoTable(patientEncounter));
 
-            // Add Vitals Table
             document.add(createVitalsTable(patientEncounter, patientVitals));
 
-            // Add Assessments Table
             document.add(getAssessments(tabFieldMultiMap, prescriptions, problems));
 
-            // Add Chief Complaints Table
             document.add(getChiefComplaintsTable(tabFieldMultiMap));
 
             document.close();
@@ -231,6 +186,22 @@ public class PDFController extends Controller {
     }
 
     /**
+     * Adds a title-value pair to a pdf table. Helper method for createEncounterInfoTable
+     *
+     * @param table the table to add to
+     * @param str_title the label for the pair
+     * @param str_value the value for the pair
+     */
+    private void addTitleValuePair(PdfPTable table, String str_title, String str_value){
+        PdfPCell cell = new PdfPCell(table.getDefaultCell());
+        Paragraph title = new Paragraph(str_title, getTitleFont());
+        Paragraph value = new Paragraph(str_value, getValueFont()); //Andrew Change
+        cell.addElement(title);
+        cell.addElement(value);
+        table.addCell(cell);
+    }
+
+    /**
      * Builds the Encounter Info Table - The names and dates of each stage of the encounter
      *
      * @param encounter the encounter item
@@ -242,78 +213,18 @@ public class PDFController extends Controller {
 
         table.addCell(getDefaultHeaderCell("Encounter Information", 3));
 
-//        // Nurse
-//        PdfPCell cell = new PdfPCell(table.getDefaultCell());
-//        Paragraph title = new Paragraph("Nurse:", getTitleFont());
-//        Paragraph value = new Paragraph(outputStringOrNA(encounter.getNurseEmailAddress()), getValueFont());
-//        cell.addElement(title);
-//        cell.addElement(value);
-//        table.addCell(cell);
-//
-//        // Physician
-//        cell = new PdfPCell(table.getDefaultCell());
-//        title = new Paragraph("Physician:", getTitleFont());
-//        value = new Paragraph(outputStringOrNA(encounter.getPhysicianEmailAddress()), getValueFont());
-//        cell.addElement(title);
-//        cell.addElement(value);
-//        table.addCell(cell);
-//
-//        // Pharmacist
-//        cell = new PdfPCell(table.getDefaultCell());
-//        title = new Paragraph("Pharmacist:", getTitleFont());
-//        value = new Paragraph(outputStringOrNA(encounter.getPharmacistEmailAddress()), getValueFont());
-//        cell.addElement(title);
-//        cell.addElement(value);
-//        table.addCell(cell);
-
         // Nurse
-        PdfPCell cell = new PdfPCell(table.getDefaultCell());
-        Paragraph title = new Paragraph("Nurse:", getTitleFont());
-        Paragraph value = new Paragraph(outputStringOrNA(encounter.getNurseFullName()), getValueFont()); //Andrew Change
-        cell.addElement(title);
-        cell.addElement(value);
-        table.addCell(cell);
-
+        addTitleValuePair(table, "Nurse:", outputStringOrNA(encounter.getNurseFullName()));
         // Physician
-        cell = new PdfPCell(table.getDefaultCell());
-        title = new Paragraph("Physician:", getTitleFont());
-        value = new Paragraph(outputStringOrNA(encounter.getPhysicianFullName()), getValueFont()); //Andrew Change
-        cell.addElement(title);
-        cell.addElement(value);
-        table.addCell(cell);
-
+        addTitleValuePair(table, "Physician:", outputStringOrNA(encounter.getPhysicianFullName()));
         // Pharmacist
-        cell = new PdfPCell(table.getDefaultCell());
-        title = new Paragraph("Pharmacist:", getTitleFont());
-        value = new Paragraph(outputStringOrNA(encounter.getPharmacistFullName()), getValueFont()); //Andrew Change
-        cell.addElement(title);
-        cell.addElement(value);
-        table.addCell(cell);
-
-
+        addTitleValuePair(table, "Pharmacist:", outputStringOrNA(encounter.getPharmacistFullName()));
         // Triage
-        cell = new PdfPCell(table.getDefaultCell());
-        title = new Paragraph("Triage Visit:", getTitleFont());
-        value = new Paragraph(outputStringOrNA(encounter.getTriageDateOfVisit()), getValueFont());
-        cell.addElement(title);
-        cell.addElement(value);
-        table.addCell(cell);
-
+        addTitleValuePair(table, "Triage Visit:", outputStringOrNA(encounter.getTriageDateOfVisit()));
         // Medical
-        cell = new PdfPCell(table.getDefaultCell());
-        title = new Paragraph("Medical Visit:", getTitleFont());
-        value = new Paragraph(outputStringOrNA(encounter.getMedicalDateOfVisit()), getValueFont());
-        cell.addElement(title);
-        cell.addElement(value);
-        table.addCell(cell);
-
+        addTitleValuePair(table, "Medical Visit:", outputStringOrNA(encounter.getMedicalDateOfVisit()));
         // Pharmacy
-        cell = new PdfPCell(table.getDefaultCell());
-        title = new Paragraph("Pharmacy Visit:", getTitleFont());
-        value = new Paragraph(outputStringOrNA(encounter.getPharmacyDateOfVisit()), getValueFont());
-        cell.addElement(title);
-        cell.addElement(value);
-        table.addCell(cell);
+        addTitleValuePair(table, "Pharmacy Visit", outputStringOrNA(encounter.getPharmacyDateOfVisit()));
 
         return table;
     }
@@ -339,13 +250,21 @@ public class PDFController extends Controller {
         table.addCell(getVitalMapCell("Respiration Rate:", "respiratoryRate", vitalMap));
         table.addCell(getVitalMapCell("Oxygen Saturation:", "oxygenSaturation", vitalMap));
 
-		//Sam Zanni
+        //Sam Zanni
         PdfPCell cell = new PdfPCell(table.getDefaultCell());
         cell.setPaddingTop(2);
-		table.addCell(getVitalMapCell("Weeks Pregnant:", "weeksPregnant", vitalMap));
+        table.addCell(getVitalMapCell("Weeks Pregnant:", "weeksPregnant", vitalMap));
         table.completeRow();
 
         return table;
+    }
+
+    // Helper method for getAssessments
+    private void addAssessmentCell(PdfPTable table, String label, String value){
+        PdfPCell cell = new PdfPCell(table.getDefaultCell());
+        cell.addElement(getStyledPhrase(label, value));
+        cell.setColspan(3);
+        table.addCell(cell);
     }
 
     /**
@@ -362,56 +281,35 @@ public class PDFController extends Controller {
         table.addCell(getDefaultHeaderCell("Assessments", 3));
 
         // Row 1
-        PdfPCell cellMSH = new PdfPCell(table.getDefaultCell());
         TabFieldItem msh = tabFieldMultiMap.getMostRecentOrEmpty("medicalSurgicalHistory", null);
-        cellMSH.addElement(getStyledPhrase("Medical Surgical History: ", outputStringOrNA(msh.getValue())));
-        cellMSH.setColspan(3);
-        table.addCell(cellMSH);
+        addAssessmentCell(table, "Medical Surgical History: ", outputStringOrNA(msh.getValue()));
 
         // Row 2
-        PdfPCell cellCM = new PdfPCell(table.getDefaultCell());
         TabFieldItem cm = tabFieldMultiMap.getMostRecentOrEmpty("currentMedication", null);
-        cellCM.addElement(getStyledPhrase("Medication: ", outputStringOrNA(cm.getValue())));
-        cellCM.setColspan(3);
-        table.addCell(cellCM);
+        addAssessmentCell(table,"Medication: ", outputStringOrNA(cm.getValue()));
 
         // Row 3
-        PdfPCell cellSH = new PdfPCell(table.getDefaultCell());
         TabFieldItem sh = tabFieldMultiMap.getMostRecentOrEmpty("socialHistory", null);
-        cellSH.addElement(getStyledPhrase("Social History: ", outputStringOrNA(sh.getValue())));
-        cellSH.setColspan(3);
-        table.addCell(cellSH);
+        addAssessmentCell(table, "Social History: ", outputStringOrNA(sh.getValue()));
 
         // Row 4
-        PdfPCell cellAssesment = new PdfPCell(table.getDefaultCell());
         TabFieldItem assessment = tabFieldMultiMap.getMostRecentOrEmpty("assessment", null);
-        cellAssesment.addElement(getStyledPhrase("Assessment: ", outputStringOrNA(assessment.getValue())));
-        cellAssesment.setColspan(3);
-        table.addCell(cellAssesment);
+        addAssessmentCell(table, "Assessment: ", outputStringOrNA(assessment.getValue()));
 
         // Row 5
-        PdfPCell cellFH = new PdfPCell(table.getDefaultCell());
         TabFieldItem fh = tabFieldMultiMap.getMostRecentOrEmpty("familyHistory", null);
-        cellFH.addElement(getStyledPhrase("Family History: ", outputStringOrNA(fh.getValue())));
-        cellFH.setColspan(3);
-        table.addCell(cellFH);
+        addAssessmentCell(table, "Family History: ", outputStringOrNA(fh.getValue()));
 
         // Row 6
-        PdfPCell cellTreatment = new PdfPCell(table.getDefaultCell());
         TabFieldItem treatment = tabFieldMultiMap.getMostRecentOrEmpty("treatment", null);
-        cellTreatment.addElement(getStyledPhrase("Treatment: ", outputStringOrNA(treatment.getValue())));
-        cellTreatment.setColspan(3);
-        table.addCell(cellTreatment);
+        addAssessmentCell(table,"Treatment: ", outputStringOrNA(treatment.getValue()));
 
         // Loop through and add any potential Custom Field Names
         // Row 7+ , set cells to colspan of 2 so they fill the whole page
         for (String customField : tabFieldMultiMap.getCustomFieldNameList()) {
 
             String value = tabFieldMultiMap.getMostRecentOrEmpty(customField, null).getValue();
-            PdfPCell customCell = new PdfPCell(table.getDefaultCell());
-            customCell.setColspan(3);
-            customCell.addElement(getStyledPhrase(customField + " :", outputStringOrNA(value)));
-            table.addCell(customCell);
+            addAssessmentCell(table,customField + " :", outputStringOrNA(value));
         }
 
         // AJ Saclayan Dispensed Table
@@ -445,21 +343,16 @@ public class PDFController extends Controller {
                     Chunk strikeThrough = new Chunk(prescription.getOriginalMedicationName(), getValueFont());
                     strikeThrough.setUnderline(0.1f, 3f);   // Thickness, the y axis location of
                     Paragraph originalMedName = new Paragraph(strikeThrough);
-                    cell = new PdfPCell(originalMedName);
-
-                    table.addCell(cell);
+                    table.addCell(new PdfPCell(originalMedName));
 
                     Paragraph replacedMedName = new Paragraph(prescription.getName(), getValueFont());
-                    cell = new PdfPCell(replacedMedName);
-                    table.addCell(cell);
+                    table.addCell(new PdfPCell(replacedMedName));
                 } else {
                     Paragraph medName = new Paragraph(prescription.getName(), getValueFont());
-                    cell = new PdfPCell(medName);
-                    table.addCell(cell);
+                    table.addCell(new PdfPCell(medName));
 
                     Paragraph blankCell = new Paragraph(" ", getValueFont());
-                    cell = new PdfPCell(blankCell);
-                    table.addCell(cell);
+                    table.addCell(new PdfPCell(blankCell));
                 }
                 table.completeRow();
             }
@@ -629,7 +522,6 @@ public class PDFController extends Controller {
      * @return the Font used for Titles on the pdf
      */
     private Font getTitleFont(){
-
         return new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD, BaseColor.BLACK);
     }
 
